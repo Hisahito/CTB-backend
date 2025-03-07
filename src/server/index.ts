@@ -29,6 +29,17 @@ app.get('/characters', async (req, res) => {
   }
 });
 
+// Ruta para obtener el listado de personajes desde Redis
+app.get('/positions', async (req, res) => {
+  try {
+    const characters = await getCharacters();
+    res.json({ characters });
+  } catch (error) {
+    console.error('Error al obtener personajes:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // Crear servidor HTTP y asociarlo a Socket.IO
 const server = http.createServer(app);
 const io = new SocketIOServer(server, {
