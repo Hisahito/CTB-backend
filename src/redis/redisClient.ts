@@ -55,3 +55,17 @@ export const getCharacters = async (): Promise<any[]> => {
     throw error;
   }
 };
+
+/**
+ * Retorna solo los eventos de tipo "BlockConquestStarted"
+ */
+export const getBlockConquestStartedEvents = async (): Promise<any[]> => {
+  try {
+    const events = await getEvents();
+    const blockConquestEvents = events.filter((event: any) => event.eventName === 'BlockConquestStarted');
+    return blockConquestEvents;
+  } catch (error) {
+    console.error('Error al obtener eventos BlockConquestStarted:', error);
+    throw error;
+  }
+};

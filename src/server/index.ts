@@ -8,7 +8,7 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { initSocket } from '../socket/socketService';
 import { initBlockchainService } from '../blockchain/blockchainService';
-import { getCharacters } from '../redis/redisClient';
+import { getCharacters , getBlockConquestStartedEvents} from '../redis/redisClient';
 
 const app = express();
 
@@ -29,13 +29,30 @@ app.get('/characters', async (req, res) => {
   }
 });
 
-// Ruta para obtener el listado de personajes desde Redis
+/**
+ * Ruta para obtener la posición actual de cada personaje.
+ * Se filtran los eventos BlockConquestStarted y, para cada personaje,
+ * se obtiene el evento con el bloque mayor (última posición conocida).
+ */
 app.get('/positions', async (req, res) => {
   try {
-    const characters = await getCharacters();
-    res.json({ characters });
+    const blockEvents = await getBlockConquestStartedEvents();
+    // Objeto para agrupar por characterId
+    const positions: { [characterId: string]: any } = {};
+    blockEvents.forEach((event: any) => {
+      const characterId = event.args.characterId;
+      // Se asume que event.blockNumber es un string. Convertimos a BigInt para comparar.
+      if (
+        !positions[characterId] ||
+        BigInt(event.blockNumber) > BigInt(positions[characterId].blockNumber)
+      ) {
+        positions[characterId] = event;
+      }
+    });
+    // Se retorna un objeto o un array con las posiciones actuales
+    res.json({ positions });
   } catch (error) {
-    console.error('Error al obtener personajes:', error);
+    console.error('Error al obtener posiciones:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
