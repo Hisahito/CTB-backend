@@ -8,7 +8,7 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { initSocket } from '../socket/socketService';
 import { initBlockchainService } from '../blockchain/blockchainService';
-import { getCharacters, getBlockConquestStartedEvents } from '../redis/redisClient';
+import { getCharacters, getBlockConquestStartedEvents,clearBlockData } from '../redis/redisClient';
 import { getBlocks } from '../blockchain/blockStateService'; // Importa la función getBlocks
 
 const app = express();
@@ -81,6 +81,7 @@ const io = new SocketIOServer(server, {
   }
 });
 
+clearBlockData();
 // Inicializa Socket.IO
 initSocket(io);
 

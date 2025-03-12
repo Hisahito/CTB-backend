@@ -26,6 +26,7 @@ export const updateBlockState = async (event: any, io?: Server): Promise<void> =
         status: 'default',
         owner: null,
         conquestEnd: null,
+        defended: null,
         futureOwner: null,
         lastOwner: null,
         ally: null,
@@ -36,9 +37,16 @@ export const updateBlockState = async (event: any, io?: Server): Promise<void> =
     // Actualización según tipo de evento.
     switch (event.eventName) {
       case 'BlockConquestStarted':
-        blockState.status = 'dominio';
+        const defendedVal = event.args.defended;
+        if(defendedVal == 1){
+            blockState.status = 'defendido';
+        }
+        else{
+            blockState.status = 'dominio';
+        }
         blockState.owner = event.args.characterId;
         blockState.conquestEnd = event.args.conquestEndBlock;
+        blockState.defended = event.args.defended;
         break;
       case 'BlockChallenged':
         blockState.status = 'redominio';

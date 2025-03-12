@@ -11,6 +11,7 @@ client.connect()
   .catch((err) => console.error('No se pudo conectar a Redis:', err));
 
 const EVENTS_KEY = 'ctb_events';
+const BLOCKS_KEY = 'ctb_blocks';
 
 export const setEvents = async (events: any[]): Promise<void> => {
   try {
@@ -66,6 +67,17 @@ export const getBlockConquestStartedEvents = async (): Promise<any[]> => {
     return blockConquestEvents;
   } catch (error) {
     console.error('Error al obtener eventos BlockConquestStarted:', error);
+    throw error;
+  }
+};
+
+// Función para borrar la clave ctb_blocks y reiniciar el estado de bloques
+export const clearBlockData = async (): Promise<void> => {
+  try {
+    await client.del(BLOCKS_KEY);
+    console.log(`Se ha eliminado la información de ${BLOCKS_KEY}`);
+  } catch (error) {
+    console.error(`Error eliminando ${BLOCKS_KEY}:`, error);
     throw error;
   }
 };

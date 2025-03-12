@@ -11,8 +11,8 @@ const CONTRACT_ADDRESS = (process.env.CONTRACT_ADDRESS ||
   '0x322AE0BEE905572DE3d1F67E2A560c19fbc76994') as `0x${string}`;
 
 const eventAbis = parseAbi([
-  'event BlockConquestStarted(uint256 indexed blockId, uint256 indexed characterId, uint256 conquestEndBlock, uint256 blocksRemaining)',
-  'event CharacterCreated(uint256 characterId, uint256 affinity, uint256 velocity)',
+  'event BlockConquestStarted(uint256 indexed blockId, uint256 indexed characterId, uint256 conquestEndBlock, uint256 blocksRemaining, uint256 defended)',
+  'event CharacterCreated(address indexed owner,uint256 characterId, uint256 affinity, uint256 velocity)',
   'event BlockChallenged(uint256 indexed blockId, uint256 indexed attackerId, uint256 previousOwner, uint256 conquestEndBlock, uint256 blocksRemaining)',
   'event BlockDefended(uint256 indexed blockId, uint256 indexed characterId)',
   'event BlockVasallo(uint256 indexed blockId, uint256 indexed vasalId, uint256 originalOwner)'
