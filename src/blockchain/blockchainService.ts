@@ -1,9 +1,11 @@
 // src/blockchain/blockchainService.ts
 import { Server } from 'socket.io';
-import { createPublicClient, http, type Log } from 'viem';
+import { createPublicClient, http, type Log ,webSocket} from 'viem';
 import { bscTestnet } from 'viem/chains';
 import { parseAbi } from 'viem';
 import { setEvents, addEvent } from '../redis/redisClient';
+import { updateBlockState } from './blockStateService';
+
 
 const CONTRACT_ADDRESS = (process.env.CONTRACT_ADDRESS ||
   '0x322AE0BEE905572DE3d1F67E2A560c19fbc76994') as `0x${string}`;
@@ -19,6 +21,11 @@ const eventAbis = parseAbi([
 const publicClient = createPublicClient({
   chain: bscTestnet,
   transport: http(process.env.ALCHEMY_API_URL),
+});
+
+const publicClientwss = createPublicClient({
+  chain: bscTestnet,
+  transport: webSocket('wss://bnb-testnet.g.alchemy.com/v2/QPfxbvXMQB4R4OVfa8u1qVp49_cNVHhh'),
 });
 
 /**
@@ -61,6 +68,35 @@ async function fetchHistoricalEvents(): Promise<any[]> {
   }
 }
 
+// Modificamos processHistoricalEvents para aceptar un array de eventos
+async function processHistoricalEvents(events: any[]): Promise<void> {
+  for (const event of events) {
+    try {
+      await updateBlockState(event);
+    } catch (error) {
+      console.error('Error actualizando estado para evento histórico:', error);
+    }
+  }
+}
+
+
+/**
+ * Inicia el contador global de bloques.
+ * Utiliza watchBlockNumber para emitir el último bloque a través de Socket.IO.
+ */
+export const initBlockCounter = (io: Server): void => {
+  const unwatch = publicClientwss.watchBlockNumber({
+    emitOnBegin: true,
+    // Si usas transporte HTTP, se activa el polling
+    onBlockNumber: (blockNumber: bigint) => {
+      console.log('Nuevo bloque detectado:', blockNumber);
+      // Emite el bloque a todos los clientes conectados.
+      io.emit('blockNumber', blockNumber.toString());
+    },
+  });
+  // Puedes guardar la función unwatch si en algún momento deseas detener la suscripción.
+};
+
 /**
  * Inicializa el servicio de blockchain:
  * - Consulta los eventos históricos, los almacena en Redis y los emite vía Socket.IO.
@@ -71,6 +107,9 @@ export const initBlockchainService = async (io: Server): Promise<void> => {
   const historicalEvents = await fetchHistoricalEvents();
   try {
     await setEvents(historicalEvents);
+    // Actualizamos el estado de los bloques con los eventos históricos
+    await processHistoricalEvents(historicalEvents);
+
     io.emit('events', historicalEvents);
   } catch (error) {
     console.error('Error al almacenar eventos históricos en Redis:', error);
@@ -86,6 +125,7 @@ export const initBlockchainService = async (io: Server): Promise<void> => {
         console.log('Nuevo evento detectado:', serialized);
         try {
           await addEvent(serialized);
+          await updateBlockState(serialized,io); // Actualizar el estado del bloque
           io.emit('newEvent', serialized);
         } catch (error) {
           console.error('Error al agregar nuevo evento en Redis:', error);
@@ -96,6 +136,9 @@ export const initBlockchainService = async (io: Server): Promise<void> => {
       console.error('Error al escuchar eventos de la blockchain:', error);
     }
   });
+
+  // Iniciar el contador global de bloques
+  initBlockCounter(io);
 };
 
 

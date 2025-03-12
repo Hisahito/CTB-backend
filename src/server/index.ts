@@ -3,12 +3,13 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
-import cors from 'cors'; // Importa el middleware de CORS
+import cors from 'cors'; // Middleware de CORS
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { initSocket } from '../socket/socketService';
 import { initBlockchainService } from '../blockchain/blockchainService';
-import { getCharacters , getBlockConquestStartedEvents} from '../redis/redisClient';
+import { getCharacters, getBlockConquestStartedEvents } from '../redis/redisClient';
+import { getBlocks } from '../blockchain/blockStateService'; // Importa la función getBlocks
 
 const app = express();
 
@@ -49,10 +50,24 @@ app.get('/positions', async (req, res) => {
         positions[characterId] = event;
       }
     });
-    // Se retorna un objeto o un array con las posiciones actuales
     res.json({ positions });
   } catch (error) {
     console.error('Error al obtener posiciones:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+/**
+ * Ruta para obtener el estado actual de los bloques.
+ * Se utiliza la función getBlocks, que lee el estado precomputado
+ * almacenado en el hash global de Redis (por ejemplo, 'ctb_blocks').
+ */
+app.get('/blocks', async (req, res) => {
+  try {
+    const blocks = await getBlocks();
+    res.json({ blocks });
+  } catch (error) {
+    console.error('Error al obtener bloques:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -79,3 +94,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
+
