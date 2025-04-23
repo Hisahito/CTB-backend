@@ -10,6 +10,11 @@ import { initSocket } from '../socket/socketService';
 import { initBlockchainService } from '../blockchain/blockchainService';
 import { getCharacters, getBlockConquestStartedEvents,clearBlockData } from '../redis/redisClient';
 import { getBlocks } from '../blockchain/blockStateService'; // Importa la función getBlocks
+import { initNftListener } from '../NFT';
+import nftRoutes from '../NFT/nftRoutes';
+import { initPositionListener } from '../posiciones';
+import { indexCharacterPositions } from '../posiciones/indexer';
+import positionRoutes from '../posiciones/positionsRoutes';
 
 const app = express();
 
@@ -18,6 +23,9 @@ app.use(cors());
 
 // Middleware para parsear JSON
 app.use(express.json());
+
+app.use('/', nftRoutes);
+app.use(positionRoutes);
 
 // Ruta para obtener el listado de personajes desde Redis
 app.get('/characters', async (req, res) => {
@@ -89,6 +97,10 @@ initSocket(io);
 initBlockchainService(io).catch((err) => {
   console.error('Error al inicializar el servicio de blockchain:', err);
 });
+
+initNftListener(io);
+initPositionListener(io);
+indexCharacterPositions().catch(console.error);
 
 // Inicia el servidor en el puerto definido en .env o 3000 por defecto
 const PORT = process.env.PORT || 3000;
