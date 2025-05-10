@@ -9,7 +9,7 @@ const abi = parseAbi([
 ]);
 
 const CONTRACT_DEPLOY_BLOCKS: Record<`0x${string}`, bigint> = {
-    '0x75F550d3C06961411aDAAAbd4a352218B9f4eeD9': 50428009n,
+    '0x4fE8dd2166701D7fcD23fb277696EdC58250aB4b': 51602386n,
     '0x8BA348B66Db64A58C8809eC613Fa9961e67f66d5': 50429163n,
   };
   
